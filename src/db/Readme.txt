@@ -1,19 +1,23 @@
+This file describes the table structures and indexing.
+
 create schema:
 /*************************************/
-CREATE TABLE `account` (
-	`id`	INTEGER,
+CREATE TABLE "account" (
+	`id`	INTEGER PRIMARY KEY AUTOINCREMENT,
 	`acct_name`	TEXT NOT NULL,
-	`acct_type`	TEXT,
-	`balance`	NUMERIC NOT NULL,
+	`acct_type`	INTEGER NOT NULL DEFAULT 0,
+	`balance`	INTEGER NOT NULL DEFAULT 0,
 	`created_at`	TEXT NOT NULL,
-	`last_updated_at`	TEXT NOT NULL,
-	PRIMARY KEY(id)
+	`last_updated_at`	TEXT NOT NULL
 )
+CREATE INDEX primary_index on 'account' ('acct_name', 'acct_type')
 /*************************************/
-CREATE TABLE `transaction` (
+CREATE TABLE "transaction" (
 	`trans_id`	INTEGER PRIMARY KEY AUTOINCREMENT,
 	`from_acct_id`	INTEGER NOT NULL,
 	`to_acct_id`	INTEGER NOT NULL,
-	`amount`	NUMERIC NOT NULL,
+	`amount`	INTEGER NOT NULL,
 	`created_at`	TEXT NOT NULL
 )
+CREATE INDEX unique_index1 on 'transaction' ('from_acct_id');
+CREATE INDEX unique_index2 on 'transaction' ('to_acct_id');
