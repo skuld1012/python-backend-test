@@ -3,38 +3,45 @@ Created on 17 Apr, 2016
 
 @author: ted.zhang
 '''
+
 import acctDao,datetime
 
-class AccountService(object):
+class AccountService():
     '''
-    classdocs
+    Service layer for account operation. Wrap all persistence logics.
     '''
     
-    def __init__(self, acct):
-        self._acct = acct
-        self._dao = acctDao.AcctDao(acctDao.DB_STRING)
+    def __init__(self, connPath=None, testMode=None):
+        if connPath is None:
+            self._dao = acctDao.AcctDao(acctDao.DB_STRING, testMode)
+        else:
+            self._dao = acctDao.AcctDao(connPath, testMode)
     
-    def createNewAccount(self, acctName, acctType):
-        self._acct.setAcctName(acctName)
-        self._acct.setAcctType(acctType)
+    def createNewAccount(self, acct, acctName, acctType):
+        acct.setAcctName(acctName)
+        acct.setAcctType(acctType)
         
         currentDatetime = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        self._acct.setCreatedAt(currentDatetime)
-        self._acct.setLastUpdatedAt(currentDatetime)
+        acct.setCreatedAt(currentDatetime)
+        acct.setLastUpdatedAt(currentDatetime)
         
-        acctId = self._dao.insertAcct(self._acct)
-        self._acct.setId(acctId)
+        acctId = self._dao.insertAcct(acct)
+        acct.setId(acctId)
     
-    def updateBalance(self):
+    def persistBalance(self, acct):
         currentDatetime = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        rowcount = self._dao.updateBalance(self._acct.Balance(), 
-                                           self._acct.getAcctName(), 
-                                           self._acct.getAcctType(), 
+        rowcount = self._dao.persistBalance(acct.Balance(), 
+                                           acct.getAcctName(), 
+                                           acct.getAcctType(), 
                                            currentDatetime)
         if rowcount == 1:
-            print "Balance of " + self._acct.getAcctName() + " with type " 
-            + str(self._acct.getAcctType()) + " is updated and persisted successfully."   
-    
-    def destroy(self):
-        self._dao.close()    
+            print "Balance of " + acct.getAcctName() + " with type " + str(acct.getAcctType()) + " is updated and persisted successfully."      
         
+    def getAllAccounts(self):
+        return self._dao.queryAll()
+    
+    def getAccountById(self, acctId):
+        return self._dao.queryByAcctId(acctId)
+    
+    def destroyIfTestMode(self):
+        self._dao.close()

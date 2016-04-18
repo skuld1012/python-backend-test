@@ -4,6 +4,7 @@ Created on 15 Apr, 2016
 @author: ted.zhang
 '''
 
+import datetime
 from decimal import Decimal
 
 ACCT_TYPE_USER = 0
@@ -11,11 +12,18 @@ ACCT_TYPE_REVENUE = 1
 ACCT_TYPE_TAX = 2
 ACCT_TYPE_COMMISSION = 3
 
+ACCT_SWITCHER = {
+    ACCT_TYPE_USER: "USER",
+    ACCT_TYPE_REVENUE: "REVENUE",
+    ACCT_TYPE_TAX: "TAX",
+    ACCT_TYPE_COMMISSION: "COMMISSION"
+}
+
 class NewAccount():
     """
     Class to handle account balance and transfer money.
     """
-    def __init__(self):
+    def __init__(self, acctId=None, acctName=None, acctType=None, balance=None, createdAt=None, lastUpdatedAt=None):
         """
         Initialize account balance and transaction list which store transaction information.
         """
@@ -24,8 +32,15 @@ class NewAccount():
         self._transList = []
         self._id = -1
         self._acctName = ""
+        if acctId is not None:
+            self._id = acctId
+            self._acctName = acctName
+            self._acctType = acctType
+            self._balance = balance
+            self._createdAt = createdAt
+            self._lastUpdatedAt = lastUpdatedAt
     
-    def updateBalance(self, balance):
+    def setBalance(self, balance):
         self._balance = balance
     
     def getId(self):
@@ -84,6 +99,12 @@ class NewAccount():
             self._balance = self._balance + amount
         else:
             del self._transList[:]
+            
+    def __str__(self):
+        return "Account ID " + str(self._id) + ", name " + self._acctName + ", type " + self.getTypeStr() + " has balance: " + str(self.Balance())
+    
+    def getTypeStr(self):
+        return ACCT_SWITCHER[self._acctType]
 
 # Can move this class to another Module file          
 class NewTransaction():
@@ -95,21 +116,79 @@ class NewTransaction():
         Initialize the account set which stores all accounts which are needed to be updated later.
         """
         self._acctSet = set()
+        self._transHisList = []
     
     def MoveMoney(self, amount, fromAcct, toAcct):
         """
         Transfer money between accounts. Account balance will be updated after Close method is called.
         """
-        fromAcct.Withdraw(amount)
-        toAcct.Deposit(amount)
-        self._acctSet.add(fromAcct)
-        self._acctSet.add(toAcct)
+        fromAcctId = -1
+        toAcctId = -1
+        
+        
+        if fromAcct is not None:
+            fromAcct.Withdraw(amount)
+            self._acctSet.add(fromAcct)
+            fromAcctId = fromAcct.getId()
+            
+        if toAcct is not None:
+            toAcct.Deposit(amount)
+            self._acctSet.add(toAcct)
+            toAcctId = toAcct.getId()
+            
+        transHist = TransHistory(-1, fromAcctId, toAcctId, amount)
+        self._transHisList.append(transHist)
     
     def Close(self):
         """
         Close transaction handler and update all stored account balance.
+        Return a list of accounts with updated balances for further persistence.
         """
+        accts = []
+        trans = []
         while self._acctSet:
             acct = self._acctSet.pop()
             acct.commit()
-        self._acctSet.clear()
+            accts.append(acct)
+        
+        currentDatetime = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        for transHist in self._transHisList:
+            transHist.setCreatedAt(currentDatetime)
+            trans.append(transHist)
+        
+        del self._transHisList[:]
+        
+        return (accts, trans)
+
+class TransHistory():
+    """
+    Object represents an instance of transaction history in transactions table
+    """
+    
+    def __init__(self, transId, fromAcctId, toAcctId, amount, createdAt=None):
+        self._transId = transId
+        self._fromAcctId = fromAcctId
+        self._toAcctId = toAcctId
+        self._amount = amount
+        self._createdAt = createdAt
+        
+    def getTransId(self):
+        return self._transId
+    
+    def getFromAcctId(self):
+        return self._fromAcctId
+    
+    def getToAcctId(self):
+        return self._toAcctId
+    
+    def getAmount(self):
+        return self._amount
+    
+    def getCreatedAt(self):
+        return self._createdAt
+    
+    def setCreatedAt(self, createdAt):
+        self._createdAt = createdAt
+    
+    def __str__(self):
+        return "Money " + str(self._amount) + " transfers from Account ID " + str(self._fromAcctId) + " to Account ID " + str(self._toAcctId) + " on " + self._createdAt

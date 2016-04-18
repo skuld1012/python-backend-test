@@ -3,20 +3,20 @@ Created on 16 Apr, 2016
 
 @author: ted.zhang
 '''
-import unittest,acct,acctDao
+
+import unittest,acct,acctService
 import sqlite3 as sql
 from decimal import Decimal
 
-class Test(unittest.TestCase):
+class SqliteTestCases(unittest.TestCase):
 
     def setUp(self):
-        pass
+        self._acctService = acctService.AccountService(":memory:", True)
     
     def tearDown(self):
-        pass
+        self._acctService.destroyIfTestMode()
 
     def testInsertAcct(self):
-        
         pass
     
     def testUpdateAcctBalance(self):
