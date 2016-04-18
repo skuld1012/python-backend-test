@@ -8,3 +8,5 @@ Also there is no input validation for the AppRun demo. Just for fun
 
 Important: 
 For the AppRun system, PLEASE use function 5 "Transaction Settlement" to persist the transactions and update the account balances.
+
+Type "python AppRun.py" in terminal to run the program.

@@ -24,15 +24,22 @@ class AcctDao():
     """
     Persistence layer of accounts
     """
-    def __init__(self, connPath, testMode=None):
+    def __init__(self, connPath, testMode=None, conn=None):
         self._connPath = connPath
         if testMode is None:
             self._testMode = False
         else:
             self._testMode = True
+            self._conn = conn
+    
+    def getConnection(self):
+        if self._testMode:
+            return self._conn
+        else:
+            return sql.connect(self._connPath)
     
     def insertAcct(self, newAcct):
-        self._conn = sql.connect(self._connPath)
+        self._conn = self.getConnection()
         self._cur = self._conn.cursor()
         try:
             paramDict = {'acct_name':newAcct.getAcctName(),
@@ -52,7 +59,7 @@ class AcctDao():
                 self._conn.close()
     
     def persistBalance(self, balance, acctName, acctType, lastUpdateAt):
-        self._conn = sql.connect(self._connPath)
+        self._conn = self.getConnection()
         self._cur = self._conn.cursor()
         try:
             paramDict = {'balance':int(balance * 100),
@@ -71,7 +78,7 @@ class AcctDao():
                 self._conn.close()
     
     def queryAll(self):
-        self._conn = sql.connect(self._connPath)
+        self._conn = self.getConnection()
         # Select dictionary cursor
         self._conn.row_factory = sql.Row
         self._cur = self._conn.cursor()
@@ -96,7 +103,7 @@ class AcctDao():
                 self._conn.close()
     
     def queryByAcctId(self, acctId):
-        self._conn = sql.connect(self._connPath)
+        self._conn = self.getConnection()
         # Select dictionary cursor
         self._conn.row_factory = sql.Row
         self._cur = self._conn.cursor()
@@ -120,6 +127,9 @@ class AcctDao():
                 self._conn.close()
             
     def close(self):
+        """
+        This method needs to be called under test mode (unittest)
+        """
         if self._testMode:
             self._conn.close()
 

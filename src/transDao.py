@@ -20,15 +20,22 @@ class TransDao:
     """
     Persistence layer of transaction histories
     """
-    def __init__(self, connPath, testMode=None):
+    def __init__(self, connPath, testMode=None, conn=None):
         self._connPath = connPath
         if testMode is None:
             self._testMode = False
         else:
             self._testMode = True
+            self._conn = conn
+            
+    def getConnection(self):
+        if self._testMode:
+            return self._conn
+        else:
+            return sql.connect(self._connPath) 
     
     def persistTransHistory(self, from_acct_id, to_acct_id, amount, created_at):
-        self._conn = sql.connect(self._connPath)
+        self._conn = self.getConnection()
         self._cur = self._conn.cursor()
         try:
             paramDict = {'from_acct_id':from_acct_id, 
@@ -47,7 +54,7 @@ class TransDao:
                 self._conn.close()
     
     def queryAllTransHistory(self):
-        self._conn = sql.connect(self._connPath)
+        self._conn = self.getConnection()
         # Select dictionary cursor
         self._conn.row_factory = sql.Row
         self._cur = self._conn.cursor()
@@ -71,5 +78,8 @@ class TransDao:
                 self._conn.close()
                 
     def close(self):
+        """
+        This method needs to be called under test mode (unittest)
+        """
         if self._testMode:
             self._conn.close()

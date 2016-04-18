@@ -104,6 +104,9 @@ class NewAccount():
         return "Account ID " + str(self._id) + ", name " + self._acctName + ", type " + self.getTypeStr() + " has balance: " + str(self.Balance())
     
     def getTypeStr(self):
+        """
+        Get account type String representation
+        """
         return ACCT_SWITCHER[self._acctType]
 
 # Can move this class to another Module file          
@@ -139,10 +142,10 @@ class NewTransaction():
         transHist = TransHistory(-1, fromAcctId, toAcctId, amount)
         self._transHisList.append(transHist)
     
-    def Close(self):
+    def Close(self, accountService=None, transactionService=None):
         """
         Close transaction handler and update all stored account balance.
-        Return a list of accounts with updated balances for further persistence.
+        Update balances and transaction histories with passed in service objects.
         """
         accts = []
         trans = []
@@ -158,7 +161,16 @@ class NewTransaction():
         
         del self._transHisList[:]
         
-        return (accts, trans)
+        if accountService is not None:
+            for account in accts:
+                accountService.persistBalance(account)
+        
+        if transactionService is not None:
+            for trans in trans:
+                transactionService.createNewTransHistory(trans.getFromAcctId(), 
+                                                         trans.getToAcctId(), 
+                                                         trans.getAmount(), 
+                                                         trans.getCreatedAt())
 
 class TransHistory():
     """

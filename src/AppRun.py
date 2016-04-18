@@ -66,14 +66,7 @@ if __name__ == '__main__':
             elif var == "5":
                 print "================================================="
                 print "Transaction settling..."
-                result = transHandler.Close()
-                for account in result[0]:
-                    accountService.persistBalance(account)
-                for trans in result[1]:
-                    transactionService.createNewTransHistory(trans.getFromAcctId(), 
-                                                             trans.getToAcctId(), 
-                                                             trans.getAmount(), 
-                                                             trans.getCreatedAt())
+                transHandler.Close(accountService, transactionService)
                 print "Transaction settlement complete."
             elif var == "6":
                 print "================================================="

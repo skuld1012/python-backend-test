@@ -11,11 +11,15 @@ class AccountService():
     Service layer for account operation. Wrap all persistence logics.
     '''
     
-    def __init__(self, connPath=None, testMode=None):
+    def __init__(self, connPath=None, testMode=None, conn=None):
+        """
+        testMode is for unittest memory db. If set to true, conn should use memory db connection.
+        Please see test_sqlite.py
+        """
         if connPath is None:
             self._dao = acctDao.AcctDao(acctDao.DB_STRING, testMode)
         else:
-            self._dao = acctDao.AcctDao(connPath, testMode)
+            self._dao = acctDao.AcctDao(connPath, testMode, conn)
     
     def createNewAccount(self, acct, acctName, acctType):
         acct.setAcctName(acctName)
@@ -34,8 +38,8 @@ class AccountService():
                                            acct.getAcctName(), 
                                            acct.getAcctType(), 
                                            currentDatetime)
-        if rowcount == 1:
-            print "Balance of " + acct.getAcctName() + " with type " + str(acct.getAcctType()) + " is updated and persisted successfully."      
+        if rowcount is not 1:
+            print "Balance of " + acct.getAcctName() + " with type " + str(acct.getAcctType()) + " is updated and persisted with error."      
         
     def getAllAccounts(self):
         return self._dao.queryAll()
@@ -44,4 +48,7 @@ class AccountService():
         return self._dao.queryByAcctId(acctId)
     
     def destroyIfTestMode(self):
+        """
+        This method needs to be called under test mode (unittest)
+        """
         self._dao.close()
